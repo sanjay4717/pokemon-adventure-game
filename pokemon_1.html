@@ -1,0 +1,345 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokemon Adventure Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        #game-container {
+            width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        #game-output {
+            padding: 20px;
+            border-bottom: 1px solid #ccc;
+            height: 300px;
+            overflow-y: scroll;
+        }
+        #game-input {
+            padding: 20px;
+        }
+        #game-input input[type="text"] {
+            width: 50%;
+            height: 30px;
+            padding: 10px;
+            font-size: 18px;
+            border: 1px solid #ccc;
+        }
+        #game-input input[type="submit"] {
+            width: 20%;
+            height: 30px;
+            padding: 10px;
+            font-size: 18px;
+            background-color: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #game-input input[type="submit"]:hover {
+            background-color: #3e8e41;
+        }
+        #commands {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        img {
+            margin: 10px; /* Add some space around images */
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1>Pokemon Adventure Game</h1>
+        <div id="game-output"></div>
+        <div id="game-input">
+            <form id="game-form">
+                <input type="text" id="input" placeholder="Enter command">
+                <input type="submit" value="Enter">
+            </form>
+        </div>
+        <div id="commands">
+            <h2>Available Commands:</h2>
+            <ul id="command-list"></ul>
+        </div>
+    </div>
+
+
+    <script>
+        const gameOutput = document.getElementById("game-output");
+        const gameForm = document.getElementById("game-form");
+        const inputField = document.getElementById("input");
+        const commandList = document.getElementById("command-list");
+
+
+        let currentRoom = "Poke Mart";
+        let player = {
+            pokemon: [],
+            inventory: [],
+            level: 1,
+            experience: 0
+        };
+
+
+        const rooms = {
+            "Poke Mart": "You are at the Poke Mart. You can buy items here.",
+            "Viridian City": "You are in Viridian City. The gym is here.",
+            "Viridian Forest": "You are in Viridian Forest. It's full of wild Pokémon.",
+            "Pewter City": "You are in Pewter City. The Rock-type gym is here.",
+            "Cerulean City": "You are in Cerulean City. You can find water Pokémon here.",
+            "Route 1": "You are on Route 1. It leads to Viridian City.",
+            "Route 2": "You are on Route 2. It leads to Pewter City."
+        };
+
+
+        const commands = [
+            "go north",
+            "go south",
+            "go east",
+            "buy pokeballs",
+            "buy potion",
+            "catch pokemon",
+            "battle",
+            "heal",
+            "use potion",
+            "level up",
+            "evolve",
+            "save",
+            "load"
+        ];
+
+
+        // Display commands in the command list
+        commands.forEach(command => {
+            const listItem = document.createElement("li");
+            listItem.textContent = command;
+            commandList.appendChild(listItem);
+        });
+
+
+        gameForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const input = inputField.value.trim();
+            const output = processInput(input);
+            gameOutput.innerText += output + '\n';
+            inputField.value = "";
+            gameOutput.scrollTop = gameOutput.scrollHeight; // Scroll to bottom
+        });
+
+
+        function processInput(input) {
+            switch (input.toLowerCase()) {
+                case "go north":
+                    if (currentRoom === "Poke Mart") {
+                        currentRoom = "Viridian City";
+                        return "You are now in Viridian City.";
+                    } else if (currentRoom === "Viridian City") {
+                        currentRoom = "Viridian Forest";
+                        return "You are now in Viridian Forest.";
+                    } else if (currentRoom === "Viridian Forest") {
+                        currentRoom = "Route 2";
+                        return "You are now on Route 2.";
+                    } else if (currentRoom === "Route 2") {
+                        currentRoom = "Pewter City";
+                        return "You are now in Pewter City.";
+                    } else if (currentRoom === "Pewter City") {
+                        currentRoom = "Cerulean City";
+                        return "You are now in Cerulean City.";
+                    }
+                    break;
+                case "go south":
+                    if (currentRoom === "Cerulean City") {
+                        currentRoom = "Pewter City";
+                        return "You are now in Pewter City.";
+                    } else if (currentRoom === "Pewter City") {
+                        currentRoom = "Route 2";
+                        return "You are now on Route 2.";
+                    } else if (currentRoom === "Route 2") {
+                        currentRoom = "Viridian Forest";
+                        return "You are now in Viridian Forest.";
+                    } else if (currentRoom === "Viridian Forest") {
+                        currentRoom = "Viridian City";
+                        return "You are now in Viridian City.";
+                    } else if (currentRoom === "Viridian City") {
+                        currentRoom = "Poke Mart";
+                        return "You are now at the Poke Mart.";
+                    }
+                    break;
+                case "go east":
+                    currentRoom = "Route 1";
+                    return "You are now on Route 1.";
+                case "buy pokeballs":
+                    player.inventory.push("Pokeballs");
+                    return "You bought Pokeballs!";
+                case "buy potion":
+                    player.inventory.push("Potion");
+                    return "You bought a Potion!";
+                case "catch pokemon":
+                    const pokemon = catchPokemon();
+                    if (pokemon) {
+                        player.pokemon.push(pokemon);
+                        displayPokemonImage(pokemon.name); // Display the Pokémon image
+                        return "You caught a " + pokemon.name + "!";
+                    } else {
+                        return "You failed to catch the Pokémon!";
+                    }
+                case "battle":
+                    const wildPokemon = getRandomPokemon();
+                    displayPokemonImage(wildPokemon.name); // Display wild Pokémon image
+                    return battlePokemon(player.pokemon[0], wildPokemon);
+                case "heal":
+                    healPokemon(player.pokemon[0]);
+                    return "You healed your Pokémon!";
+                case "use potion":
+                    return useItem("Potion");
+                case "level up":
+                    levelUpPokemon(player.pokemon[0]);
+                    return "Your Pokémon leveled up!";
+                case "evolve":
+                    const evolvedPokemon = evolvePokemon(player.pokemon[0]);
+                    if (evolvedPokemon) {
+                        player.pokemon[0] = evolvedPokemon;
+                        return "Your Pokémon evolved into " + evolvedPokemon.name + "!";
+                    } else {
+                        return "Your Pokémon cannot evolve!";
+                    }
+                case "save":
+                    saveGame();
+                    return "Game saved!";
+                case "load":
+                    loadGame();
+                    return "Game loaded!";
+                default:
+                    return "Invalid command.";
+            }
+        }
+
+
+        function catchPokemon() {
+            const wildPokemons = [
+                { name: "Pidgey", level: 10, hp: 10, attack: 10, defense: 10 },
+                { name: "Rattata", level: 5, hp: 5, attack: 5, defense: 5 },
+                { name: "Zubat", level: 8, hp: 8, attack: 8, defense: 8 },
+                { name: "Caterpie", level: 3, hp: 3, attack: 2, defense: 1 },
+                { name: "Sandshrew", level: 12, hp: 12, attack: 11, defense: 11 },
+                { name: "Psyduck", level: 15, hp: 15, attack: 12, defense: 10 },
+                { name: "Mankey", level: 14, hp: 14, attack: 13, defense: 10 },
+                { name: "Poliwag", level: 13, hp: 13, attack: 10, defense: 10 },
+                { name: "Machop", level: 16, hp: 16, attack: 14, defense: 12 },
+                { name: "Geodude", level: 17, hp: 20, attack: 15, defense: 14 },
+                { name: "Pikachu", level: 20, hp: 18, attack: 16, defense: 15 }
+            ];
+            const randomIndex = Math.floor(Math.random() * wildPokemons.length);
+            return wildPokemons[randomIndex];
+        }
+
+
+        function getRandomPokemon() {
+            const wildPokemons = [
+                { name: "Pidgey", level: 10 },
+                { name: "Rattata", level: 5 },
+                { name: "Zubat", level: 8 },
+                { name: "Caterpie", level: 3 },
+                { name: "Sandshrew", level: 12 },
+                { name: "Psyduck", level: 15 },
+                { name: "Mankey", level: 14 },
+                { name: "Poliwag", level: 13 },
+                { name: "Machop", level: 16 },
+                { name: "Geodude", level: 17 },
+                { name: "Pikachu", level: 20 }
+            ];
+            const randomIndex = Math.floor(Math.random() * wildPokemons.length);
+            return wildPokemons[randomIndex];
+        }
+
+
+        function battlePokemon(playerPokemon, wildPokemon) {
+            if (playerPokemon && wildPokemon) {
+                const playerDamage = Math.floor(Math.random() * 5) + playerPokemon.level; // Random damage based on level
+                const wildDamage = Math.floor(Math.random() * 5) + wildPokemon.level; // Random damage based on level
+                return `${playerPokemon.name} dealt ${playerDamage} damage to ${wildPokemon.name}. ${wildPokemon.name} dealt ${wildDamage} damage to ${playerPokemon.name}.`;
+            }
+            return "No Pokémon available for battle.";
+        }
+
+
+        function healPokemon(pokemon) {
+            if (pokemon) {
+                pokemon.hp += 10; // Simple healing logic
+                return `${pokemon.name} has been healed!`;
+            }
+            return "No Pokémon available to heal.";
+        }
+
+
+        function useItem(item) {
+            if (item === "Potion" && player.inventory.includes("Potion")) {
+                player.inventory.splice(player.inventory.indexOf("Potion"), 1); // Remove one potion
+                if (player.pokemon.length > 0) {
+                    healPokemon(player.pokemon[0]); // Heal the first Pokémon
+                    return "You used a Potion!";
+                }
+            }
+            return "No items to use.";
+        }
+
+
+        function levelUpPokemon(pokemon) {
+            if (pokemon) {
+                pokemon.level += 1; // Simple leveling logic
+                return `${pokemon.name} leveled up to level ${pokemon.level}!`;
+            }
+            return "No Pokémon available to level up.";
+        }
+
+
+        function evolvePokemon(pokemon) {
+            if (pokemon && pokemon.name === "Caterpie" && pokemon.level >= 7) {
+                return { name: "Metapod", level: 7 }; // Example evolution
+            }
+            return null; // No evolution
+        }
+
+
+        function saveGame() {
+            const gameData = {
+                player: player,
+                currentRoom: currentRoom
+            };
+            localStorage.setItem("pokemonGame", JSON.stringify(gameData));
+        }
+
+
+        function loadGame() {
+            const gameData = JSON.parse(localStorage.getItem("pokemonGame"));
+            if (gameData) {
+                player = gameData.player;
+                currentRoom = gameData.currentRoom;
+                return "Game loaded successfully!";
+            }
+            return "No saved game found.";
+        }
+
+
+        function displayPokemonImage(pokemonName) {
+            const imgElement = document.createElement("img");
+            imgElement.src = `images/${pokemonName.toLowerCase()}.png`; // Assuming images are named in lowercase
+            imgElement.alt = pokemonName;
+            imgElement.style.width = "100px"; // Set the width of the image
+            imgElement.style.height = "100px"; // Set the height of the image
+            gameOutput.appendChild(imgElement); // Append image to the game output
+        }
+
+
+    </script>
+</body>
+</html>
